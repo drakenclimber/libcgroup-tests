@@ -58,11 +58,11 @@ class Container(object):
 
 
     def __str__(self):
-        out_str = "{}".format(self.name)
+        out_str = "Container {}".format(self.name)
         out_str += "\n\tdistro = {}".format(self.distro)
         out_str += "\n\trelease = {}".format(self.release)
         out_str += "\n\tarch = {}".format(self.arch)
-        out_str += "\n\tstop_timeout = {}".format(self.stop_timeout)
+        out_str += "\n\tstop_timeout = {}\n".format(self.stop_timeout)
 
         return out_str
 

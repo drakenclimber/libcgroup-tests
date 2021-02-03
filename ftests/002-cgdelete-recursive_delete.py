@@ -24,7 +24,6 @@ from cgroup import Cgroup, CgroupVersion
 import consts
 import ftests
 import os
-from process import Process
 import sys
 
 CONTROLLER = 'cpuset'
@@ -49,7 +48,7 @@ def setup(config):
         # Moving a process from a child cgroup to its parent isn't (easily)
         # supported in cgroup v2 because of cgroup v2's restriction that
         # processes only be located in leaf cgroups
-        Process.create_process_in_cgroup(config, CONTROLLER,
+        config.process.create_process_in_cgroup(config, CONTROLLER,
                                          os.path.join(PARENT, CHILD, GRANDCHILD))
 
 def test(config):
