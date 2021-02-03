@@ -19,9 +19,9 @@
 # along with this library; if not, see <http://www.gnu.org/licenses>.
 #
 
-TESTS = ftests.sh
+TESTS = ftests.sh ftests-nocontainer.sh
 
-EXTRA_DIST = *.py README.md default.conf ftests.sh
+EXTRA_DIST = *.py README.md default.conf ftests.sh ftests-nocontainer.sh
 
 clean-local: clean-local-check
 .PHONY: clean-local-check
