@@ -52,6 +52,7 @@ gtest_SOURCES = gtest.cpp \
 		012-cgroup_create_cgroup.cpp \
 		013-cgroup_build_tasks_procs_path.cpp \
 		014-cgroupv2_get_subtree_control.cpp \
-		015-cgroupv2_controller_enabled.cpp
+		015-cgroupv2_controller_enabled.cpp \
+		016-v1_shares_to_v2.cpp
 gtest_LDFLAGS = -L$(top_builddir)/googletest/googletest -l:libgtest.so \
 		-rpath $(abs_top_builddir)/googletest/googletest
