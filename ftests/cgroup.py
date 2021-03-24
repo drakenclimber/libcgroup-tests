@@ -20,6 +20,7 @@
 #
 
 import consts
+import copy
 from controller import Controller
 from enum import Enum
 import multiprocessing as mp
@@ -41,6 +42,7 @@ class CgroupMount(object):
 
         self.mount_point = entries[1]
 
+        self.controller = None
         if self.version == CgroupVersion.CGROUP_V1:
             self.controller = entries[3].split(',')[-1]
 
@@ -48,7 +50,7 @@ class CgroupMount(object):
         out_str = "CgroupMount"
         out_str += "\n\tMount Point = {}".format(self.mount_point)
         out_str += "\n\tCgroup Version = {}".format(self.version)
-        if self.version == CgroupVersion.CGROUP_V1:
+        if self.controller is not None:
             out_str += "\n\tController = {}".format(self.controller)
         
         return out_str
@@ -730,7 +732,10 @@ class Cgroup(object):
                                        "cgroup.controllers")) as ctrlf:
                     for line in ctrlf.readlines():
                         for ctrl in line.split():
-                            mount.controller = ctrl
-                            mount_list_append(mount)
+                            mount_copy = copy.deepcopy(mount)
+                            mount_copy.controller = ctrl
+                            mount_list.append(mount_copy)
 
+        for mnt in mount_list:
+            print(mnt)
         return mount_list
