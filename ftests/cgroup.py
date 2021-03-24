@@ -28,6 +28,31 @@ from run import Run, RunError
 import time
 import utils
 
+class CgroupMount(object):
+    def __init__(self, mount_line):
+        entries = mount_line.split()
+
+        if entries[2] == "cgroup":
+            self.version = CgroupVersion.CGROUP_V1
+        elif entries[2] == "cgroup2":
+            self.version = CgroupVersion.CGROUP_V2
+        else:
+            raise ValueError("Unknown cgroup version")
+
+        self.mount_point = entries[1]
+
+        if self.version == CgroupVersion.CGROUP_V1:
+            self.controller = entries[3].split(',')[-1]
+
+    def __str__(self):
+        out_str = "CgroupMount"
+        out_str += "\n\tMount Point = {}".format(self.mount_point)
+        out_str += "\n\tCgroup Version = {}".format(self.version)
+        if self.version == CgroupVersion.CGROUP_V1:
+            out_str += "\n\tController = {}".format(self.controller)
+        
+        return out_str
+
 class CgroupVersion(Enum):
     CGROUP_UNK = 0
     CGROUP_V1 = 1
@@ -655,3 +680,57 @@ class Cgroup(object):
             return config.container.run(cmd)
         else:
             return Run.run(cmd)
+
+    @staticmethod
+    def lssubsys(config, ls_all=False, cghelp=False, hierarchies=False,
+                 mount_points=False, all_mount_points=False):
+        cmd = list()
+
+        cmd.append(Cgroup.build_cmd_path('lssubsys'))
+
+        if ls_all:
+            cmd.append('-a')
+
+        if cghelp:
+            cmd.append('-h')
+
+        if hierarchies:
+            cmd.append('-i')
+
+        if mount_points:
+            cmd.append('-m')
+
+        if all_mount_points:
+            cmd.append('-M')
+
+        if config.args.container:
+            return config.container.run(cmd)
+        else:
+            return Run.run(cmd)
+
+    @staticmethod
+    def get_cgroup_mounts(config, expand_v2_mounts=True):
+        mount_list = list()
+
+        with open('/proc/mounts') as mntf:
+            for line in mntf.readlines():
+                entry = line.split()
+    
+                if entry[0] != "cgroup" and entry[0] != "cgroup2":
+                    continue
+    
+                mount = CgroupMount(line)
+
+                if mount.version == CgroupVersion.CGROUP_V1 or \
+                   expand_v2_mounts == False:
+                    mount_list.append(mount)
+                    continue
+
+                with open(os.path.join(mount.mount_point,
+                                       "cgroup.controllers")) as ctrlf:
+                    for line in ctrlf.readlines():
+                        for ctrl in line.split():
+                            mount.controller = ctrl
+                            mount_list_append(mount)
+
+        return mount_list
