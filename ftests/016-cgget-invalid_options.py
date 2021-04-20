@@ -114,16 +114,11 @@ def test(config):
         Cgroup.get(config, setting="invalid.setting", cgname=CGNAME,
                    print_headers=False, values_only=True)
     except RunError as re:
-        if not "cgget: cannot find controller" in re.stderr:
-            result = consts.TEST_FAILED
-            cause = "#4 Expected 'cgget: cannot find controller' to be in stderr"
-            return result, cause
-
         # legacy cgget returns 0 but populates stderr for this case.
         # This feels wrong, so the updated cgget returns ECGOTHER
-        if re.ret != 96 and re.ret != 0:
+        if re.ret != 96 and re.ret != 92 and re.ret != 0:
             result = consts.TEST_FAILED
-            cause = "#4 Expected return code of 0 or 96 but received {}".format(
+            cause = "#4 Expected return code of 0, 92, or 96 but received {}".format(
                     re.ret)
             return result, cause
     else:
