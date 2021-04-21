@@ -88,3 +88,11 @@ def get_file_permissions(config, filename):
         return config.container.run(cmd, shell_bool=True)
     else:
         return Run.run(cmd, shell_bool=True)
+
+def get_num_proc(config):
+    if config.args.container:
+        ret = config.container.run('nproc', shell_bool=True)
+    else:
+        ret = Run.run('nproc', shell_bool=True)
+
+    return int(ret)
