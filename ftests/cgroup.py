@@ -836,3 +836,46 @@ class Cgroup(object):
                     raise re
 
         return ret
+
+    # exec is a keyword in python, so let's name this function cgexec
+    @staticmethod
+    def cgexec(config, controller, cgname, cmdline, sticky=False):
+        cmd = list()
+
+        if not config.args.container:
+            cmd.append('sudo')
+        cmd.append(Cgroup.build_cmd_path('cgexec'))
+        cmd.append('-g')
+        cmd.append('{}:{}'.format(controller, cgname))
+
+        if sticky:
+            cmd.append('--sticky')
+
+        if isinstance(cmdline, str):
+            cmd.append(cmdline)
+        elif isinstance(cmdline, list):
+            for entry in cmdline:
+                cmd.append(entry)
+
+        print("cgexec cmd = {}".format(cmd))
+        if config.args.container:
+            config.container.run(cmd, shell_bool=True)
+        else:
+            Run.run(cmd, shell_bool=True)
+
+    @staticmethod
+    def get_procs_in_cgroup(config, cgroup, controller):
+        mounts = Cgroup.get_cgroup_mounts(config)
+
+        for mount in mounts:
+            if mount.controller == controller:
+               proc_file = os.path.join(mount.mount_point, cgroup, "cgroup.procs")
+               print("proc file = {}".format(proc_file))
+               cmd = ['cat', proc_file]
+
+               if config.args.container:
+                   return config.container.run(cmd, shell_bool=True)
+               else:
+                   return Run.run(cmd, shell_bool=True)
+
+        return None

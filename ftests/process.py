@@ -52,20 +52,7 @@ class Process(object):
             # catch and suppress it
             pass
 
-    def create_process(self, config):
-        # To allow for multiple processes to be created, each new process
-        # sleeps for a different amount of time.  This lets us uniquely find
-        # each process later in this function
-        sleep_time = len(self.children) + 1
-
-        p = mp.Process(target=Process.__infinite_loop,
-                       args=(config, sleep_time, ))
-        p.start()
-
-        # wait for the process to start.  If we don't wait, then the getpid
-        # logic below may not find the process
-        time.sleep(2)
-
+    def __save_child_pid(self, config, sleep_time):
         # get the PID of the newly spawned infinite loop
         cmd = 'ps x | grep perl | grep "sleep({})" | awk \'{{print $1}}\''.format(sleep_time)
         if config.args.container:
@@ -80,16 +67,60 @@ class Process(object):
                 # The second pid in the list contains the actual perl process
                 pid = pid.splitlines()[1]
 
+        print("pid = {}".format(pid))
         if pid == "" or int(pid) <= 0:
-            raise ValueError('Failed to get the pid of the child process: {}'.format(pid))
+            pass
+#            raise ValueError('Failed to get the pid of the child process: {}'.format(pid))
 
+    def create_process(self, config):
+        # To allow for multiple processes to be created, each new process
+        # sleeps for a different amount of time.  This lets us uniquely find
+        # each process later in this function
+        sleep_time = len(self.children) + 1
+
+        p = mp.Process(target=Process.__infinite_loop,
+                       args=(config, sleep_time, ))
+        p.start()
+
+        # wait for the process to start.  If we don't wait, then the getpid
+        # logic below may not find the process
+        time.sleep(2)
+
+        self.__save_child_pid(config, sleep_time)
         self.children.append(p)
-        return pid
 
     # Create a simple process in the requested cgroup
     def create_process_in_cgroup(self, config, controller, cgname):
         child_pid = self.create_process(config)
         Cgroup.classify(config, controller, cgname, child_pid)
+
+    def __infinite_loop2(config, controller, cgname, sleep_time=1):
+        cmd = ['/usr/bin/perl', '-e', '\'while(1){{sleep({})}};\''.format(sleep_time)]
+        print("in infinite loop2")
+
+        try:
+            Cgroup.cgexec(config, controller, cgname, cmd)
+        except RunError as re:
+            # Ignore any run errors that are thrown once this process is killed
+            pass
+
+    # Create a process in the requested cgroup by using cgexec
+    def create_process_in_cgroup2(self, config, controller, cgname):
+        # To allow for multiple processes to be created, each new process
+        # sleeps for a different amount of time.  This lets us uniquely find
+        # each process later in this function
+        sleep_time = len(self.children) + 1
+
+        p = mp.Process(target=Process.__infinite_loop2,
+                       args=(config, controller, cgname, sleep_time, ))
+        p.start()
+
+        # wait for the process to start.  If we don't wait, then the getpid
+        # logic below may not find the process
+        time.sleep(2)
+
+        self.__save_child_pid(config, sleep_time)
+        self.children.append(p)
 
     # The caller will block until all children are stopped.
     def join_children(self, config):

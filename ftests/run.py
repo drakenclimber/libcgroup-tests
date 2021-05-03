@@ -44,6 +44,12 @@ class Run(object):
         out = out.strip().decode('ascii')
         err = err.strip().decode('ascii')
 
+        if isinstance(command, str) and command.find('perl') != -1:
+            print("command = {}".format(command))
+            print("stdout = {}".format(out))
+            print("stderr = {}".format(err))
+            print("ret = {}".format(ret))
+
         if shell_bool:
             Log.log_debug(
                 "run:\n\tcommand = {}\n\tret = {}\n\tstdout = {}\n\tstderr = {}".format(
